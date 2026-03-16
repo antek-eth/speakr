@@ -572,6 +572,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const useAsrEndpoint = ref(false);
             const connectorSupportsDiarization = ref(false);  // Connector capability for diarization UI
             const connectorSupportsSpeakerCount = ref(false);  // Connector capability for min/max speakers
+            const availableModels = ref([]);
+            const selectedModelId = ref(null);
             const currentUserName = ref('');
             const canDeleteRecordings = ref(true);
             const enableInternalSharing = ref(false);
@@ -740,7 +742,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 openAsrDropdownIndex,
 
                 // App Config
-                useAsrEndpoint, connectorSupportsDiarization, connectorSupportsSpeakerCount, currentUserName, canDeleteRecordings, enableInternalSharing, enableArchiveToggle, showUsernamesInUI,
+                useAsrEndpoint, connectorSupportsDiarization, connectorSupportsSpeakerCount, availableModels, selectedModelId, currentUserName, canDeleteRecordings, enableInternalSharing, enableArchiveToggle, showUsernamesInUI,
 
                 // Internal Sharing
                 showUnifiedShareModal, internalShareUserSearch, internalShareSearchResults,
@@ -2247,6 +2249,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                     connectorSupportsDiarization.value = appElement.dataset.connectorSupportsDiarization === 'True';
                     connectorSupportsSpeakerCount.value = appElement.dataset.connectorSupportsSpeakerCount === 'True';
                     currentUserName.value = appElement.dataset.currentUserName || '';
+                }
+
+                // Fetch available transcription models
+                try {
+                    const resp = await fetch('/api/models');
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        availableModels.value = data.models || [];
+                        const savedModel = localStorage.getItem('speakr_selected_model');
+                        if (savedModel && availableModels.value.some(m => m.id === savedModel)) {
+                            selectedModelId.value = savedModel;
+                        } else {
+                            const defaultModel = availableModels.value.find(m => m.default);
+                            if (defaultModel) {
+                                selectedModelId.value = defaultModel.id;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch transcription models:', e);
                 }
 
                 // Initialize UI

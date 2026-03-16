@@ -36,7 +36,7 @@ export function useUpload(state, utils) {
         maxFileSizeMB, chunkingEnabled, chunkingMode, chunkingLimit, maxConcurrentUploads,
         recordings, selectedRecording, totalRecordings, globalError,
         selectedTagIds, uploadLanguage, uploadMinSpeakers, uploadMaxSpeakers, uploadHotwords, uploadInitialPrompt,
-        useAsrEndpoint, connectorSupportsDiarization, asrLanguage, asrMinSpeakers, asrMaxSpeakers,
+        useAsrEndpoint, connectorSupportsDiarization, availableModels, selectedModelId, asrLanguage, asrMinSpeakers, asrMaxSpeakers,
         dragover, availableTags, uploadTagSearchFilter,
         // Folder state
         availableFolders, selectedFolderId,
@@ -58,6 +58,17 @@ export function useUpload(state, utils) {
             availableTags.value.find(t => t.id === id)
         ).filter(Boolean);
     });
+
+    // Multi-model support
+    const selectedModel = computed(() => {
+        return availableModels.value.find(m => m.id === selectedModelId.value) || null;
+    });
+
+    function onModelSelected() {
+        if (selectedModelId.value) {
+            localStorage.setItem('speakr_selected_model', selectedModelId.value);
+        }
+    }
 
     // --- Tag Drag-and-Drop State ---
     const draggedTagIndex = ref(null);
@@ -382,6 +393,9 @@ export function useUpload(state, utils) {
             if (initialPrompt && initialPrompt.trim()) {
                 formData.append('initial_prompt', initialPrompt.trim());
             }
+            if (selectedModelId.value) {
+                formData.append('model_id', selectedModelId.value);
+            }
 
             // Use XMLHttpRequest for per-file upload progress
             const data = await new Promise((resolve, reject) => {
@@ -643,6 +657,9 @@ export function useUpload(state, utils) {
             if (initialPrompt && initialPrompt.trim()) {
                 formData.append('initial_prompt', initialPrompt.trim());
             }
+            if (selectedModelId.value) {
+                formData.append('model_id', selectedModelId.value);
+            }
 
             // Request auto-summarization
             formData.append('auto_summarize', 'true');
@@ -804,6 +821,9 @@ export function useUpload(state, utils) {
         clearIncognitoRecordingWithConfirm,
         selectIncognitoRecording,
         loadIncognitoRecording,
-        hasIncognitoRecording
+        hasIncognitoRecording,
+        // Multi-model
+        selectedModel,
+        onModelSelected,
     };
 }
