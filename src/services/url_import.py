@@ -32,6 +32,7 @@ _ERROR_MAP = [
     ('is not a valid URL', 'Invalid URL format'),
     ('is a live event', 'Live streams cannot be imported'),
     ('is a playlist', 'Playlists are not supported — use a single video URL'),
+    ('Sign in to confirm', 'YouTube is requiring sign-in from this server — try a different video or source'),
 ]
 
 
@@ -120,7 +121,8 @@ def fetch_metadata(url, timeout=30):
     try:
         result = subprocess.run(
             ['yt-dlp', '--ignore-config', '--dump-json', '--no-download',
-             '--no-playlist', '--no-warnings', url],
+             '--no-playlist', '--no-warnings',
+             '--remote-components', 'ejs:github', url],
             shell=False, capture_output=True, text=True, timeout=timeout
         )
         if result.returncode == 0:
@@ -152,6 +154,7 @@ def download_audio(url, output_path, timeout=120):
             ['yt-dlp', '--ignore-config', '-x', '--audio-format', 'mp3',
              '--audio-quality', '128K', '--no-playlist',
              '--max-filesize', '500m',  # Reject huge files
+             '--remote-components', 'ejs:github',
              '-o', output_path, url],
             shell=False, capture_output=True, text=True, timeout=timeout
         )
