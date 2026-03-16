@@ -2268,12 +2268,12 @@ def import_url():
     if not data:
         return jsonify({'error': 'Request body required'}), 400
 
-    url = data.get('url', '').strip()
-    model_id = data.get('model_id', '').strip() or None
-    tag_ids = data.get('tags', [])
-    language = data.get('language', '').strip() or None
-    hotwords = data.get('hotwords', '').strip() or None
-    initial_prompt = data.get('initial_prompt', '').strip() or None
+    url = (data.get('url') or '').strip()
+    model_id = (data.get('model_id') or '').strip() or None
+    tag_ids = data.get('tags') or []
+    language = (data.get('language') or '').strip() or None
+    hotwords = (data.get('hotwords') or '').strip() or None
+    initial_prompt = (data.get('initial_prompt') or '').strip() or None
     min_speakers = data.get('min_speakers')
     max_speakers = data.get('max_speakers')
 
