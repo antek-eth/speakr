@@ -24,6 +24,7 @@ _BLOCKED_HOSTS = {
 _ERROR_MAP = [
     ('Video unavailable', 'This video is unavailable or private'),
     ('is not available', 'This video is unavailable or private'),
+    ('not made this video available in your country', 'This video is geo-restricted and not available from this server\'s location'),
     ('Private video', 'This video is private'),
     ('HTTP Error 429', 'Too many downloads, try again later'),
     ('HTTP Error 403', 'Access denied — video may be geo-restricted'),
