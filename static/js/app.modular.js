@@ -884,6 +884,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const formatStatus = (status) => {
                 const statusMap = {
+                    'DOWNLOADING': t('status.downloading'),
                     'PENDING': t('status.pending'),
                     'PROCESSING': t('status.processing'),
                     'SUMMARIZING': t('status.summarizing'),
@@ -896,6 +897,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const getStatusClass = (status) => {
                 switch(status) {
                     case 'COMPLETED': return 'status-completed';
+                    case 'DOWNLOADING': return 'status-processing';
                     case 'PROCESSING': return 'status-processing';
                     case 'SUMMARIZING': return 'status-summarizing';
                     case 'PENDING': return 'status-pending';
@@ -1590,7 +1592,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Backend processing queue - recordings being processed on the server
             const backendProcessingRecordings = computed(() => {
-                return recordings.value.filter(r => ['PENDING', 'PROCESSING', 'SUMMARIZING', 'QUEUED'].includes(r.status));
+                return recordings.value.filter(r => ['DOWNLOADING', 'PENDING', 'PROCESSING', 'SUMMARIZING', 'QUEUED'].includes(r.status));
             });
 
             // Job queue polling state
@@ -1966,6 +1968,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const displays = {
                     'ready': { label: 'Waiting', color: 'gray', icon: 'fa-clock' },
                     'uploading': { label: 'Uploading', color: 'blue', icon: 'fa-cloud-upload-alt', animate: true },
+                    'downloading': { label: 'Downloading', color: 'blue', icon: 'fa-download', animate: true },
                     'queued': { label: 'Queued', color: 'yellow', icon: 'fa-clock' },
                     'transcribing': { label: 'Transcribing', color: 'purple', icon: 'fa-microphone-alt', animate: true },
                     'summarizing': { label: 'Summarizing', color: 'green', icon: 'fa-file-alt', animate: true },

@@ -70,6 +70,7 @@ export const formatShortDate = (dateString) => {
 export const formatStatus = (status, t) => {
     if (!status || status === 'COMPLETED') return '';
     const statusMap = {
+        'DOWNLOADING': t('status.downloading'),
         'PENDING': t('status.queued'),
         'QUEUED': t('status.queued'),
         'PROCESSING': t('status.processing'),
@@ -83,6 +84,7 @@ export const formatStatus = (status, t) => {
 
 export const getStatusClass = (status) => {
     switch(status) {
+        case 'DOWNLOADING': return 'status-processing';
         case 'PENDING': return 'status-pending';
         case 'QUEUED': return 'status-pending';
         case 'PROCESSING': return 'status-processing';

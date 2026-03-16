@@ -26,7 +26,7 @@ class Recording(db.Model):
     notes = db.Column(db.Text)
     transcription = db.Column(db.Text, nullable=True)
     summary = db.Column(db.Text, nullable=True)
-    status = db.Column(db.String(50), default='PENDING')  # PENDING, PROCESSING, SUMMARIZING, COMPLETED, FAILED
+    status = db.Column(db.String(50), default='PENDING')  # DOWNLOADING, PENDING, PROCESSING, SUMMARIZING, COMPLETED, FAILED
     audio_path = db.Column(db.String(500))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     meeting_date = db.Column(db.DateTime, nullable=True)
