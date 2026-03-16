@@ -211,6 +211,11 @@
                                         class="inline-flex items-center whitespace-nowrap py-1 px-1.5 sm:py-3 sm:px-3 border-b-2 font-medium text-xs sm:text-sm rounded-t-md sm:rounded-t-lg hover:bg-[var(--bg-tertiary)]">
                                     <i class="fas fa-database mr-0.5 sm:mr-2 text-xs sm:text-sm"></i><span>${t('adminDashboard.vectorStore')}</span>
                                 </button>
+                                <button v-if="!isTeamAdminOnly" @click="activeTab = 'models'; loadModelsConfig()"
+                                        :class="activeTab === 'models' ? 'border-[var(--border-accent)] text-[var(--text-accent)]' : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--border-secondary)]'"
+                                        class="inline-flex items-center whitespace-nowrap py-1 px-1.5 sm:py-3 sm:px-3 border-b-2 font-medium text-xs sm:text-sm rounded-t-md sm:rounded-t-lg hover:bg-[var(--bg-tertiary)]">
+                                    <i class="fas fa-brain mr-0.5 sm:mr-2 text-xs sm:text-sm"></i><span>Models</span>
+                                </button>
                             </div>
                         </nav>
                     </div>
@@ -1054,6 +1059,99 @@ Summarization Instructions:
                         </div>
                     </div>
                 </div>
+
+                <!-- Models Config Tab -->
+                <div v-show="activeTab === 'models'">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-[var(--text-secondary)]">Transcription Models Config</h3>
+                        <div class="flex items-center gap-2">
+                            <span v-if="modelsConfigData.is_multi_model" class="text-xs text-green-500 font-medium">
+                                <i class="fas fa-check-circle mr-1"></i> Multi-model active
+                            </span>
+                            <span v-else class="text-xs text-[var(--text-muted)]">
+                                <i class="fas fa-info-circle mr-1"></i> Single-model (env-based)
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Active Models -->
+                    <div v-if="modelsConfigData.active_models && modelsConfigData.active_models.length" class="mb-4 p-3 bg-[var(--bg-tertiary)] rounded-lg border border-[var(--border-primary)]">
+                        <p class="text-xs font-medium text-[var(--text-muted)] mb-2 uppercase tracking-wide">Active Models</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span v-for="m in modelsConfigData.active_models" :key="m.id"
+                                  class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full"
+                                  :class="m.is_default ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-secondary)]'">
+                                <i class="fas fa-brain mr-1.5 text-[10px]"></i>
+                                ${ m.name }
+                                <span v-if="m.is_default" class="ml-1 text-[10px] opacity-70">(default)</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Info/Help -->
+                    <div v-if="!modelsConfigData.exists && !modelsConfigYaml" class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <p class="text-sm text-blue-800 dark:text-blue-300">
+                            <i class="fas fa-info-circle mr-1.5"></i>
+                            No <code class="px-1 py-0.5 bg-blue-100 dark:bg-blue-800/50 rounded text-xs">transcription-models.yaml</code> found.
+                            Paste your config below or click <strong>Load Example</strong> to start from the template.
+                        </p>
+                    </div>
+
+                    <!-- Editor -->
+                    <div class="relative">
+                        <textarea v-model="modelsConfigYaml"
+                                  class="w-full h-[500px] p-4 font-mono text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-secondary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)] resize-y"
+                                  placeholder="# Paste your transcription-models.yaml content here..."
+                                  spellcheck="false"></textarea>
+                        <div class="absolute top-2 right-2 flex gap-1">
+                            <button v-if="modelsConfigData.example"
+                                    @click="modelsConfigYaml = modelsConfigData.example"
+                                    class="px-2 py-1 text-xs bg-[var(--bg-tertiary)] text-[var(--text-muted)] rounded hover:bg-[var(--bg-accent-hover)] hover:text-[var(--text-accent)] transition-colors"
+                                    title="Load example config">
+                                <i class="fas fa-file-import mr-1"></i> Load Example
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Save/Status Bar -->
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="flex items-center gap-3">
+                            <button @click="saveModelsConfig"
+                                    :disabled="isSavingModelsConfig"
+                                    class="px-4 py-2 bg-[var(--bg-button)] text-[var(--text-button)] rounded-lg shadow hover:bg-[var(--bg-button-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)] transition duration-150 disabled:opacity-50">
+                                <i :class="isSavingModelsConfig ? 'fas fa-spinner fa-spin' : 'fas fa-save'" class="mr-2"></i>
+                                ${ isSavingModelsConfig ? 'Saving...' : 'Save & Reload' }
+                            </button>
+                            <button v-if="modelsConfigData.exists"
+                                    @click="if(confirm('Remove config and revert to single-model env-based mode?')) { modelsConfigYaml = ''; saveModelsConfig(); }"
+                                    class="px-4 py-2 text-sm text-[var(--text-danger)] border border-[var(--border-secondary)] rounded-lg hover:bg-[var(--bg-danger-light)] transition-colors">
+                                <i class="fas fa-trash mr-1"></i> Remove Config
+                            </button>
+                        </div>
+                        <div>
+                            <span v-if="modelsConfigMessage" :class="modelsConfigError ? 'text-red-500' : 'text-green-500'" class="text-sm">
+                                ${ modelsConfigMessage }
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Reload Warning -->
+                    <div v-if="modelsConfigData.reload_error" class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                        <p class="text-sm text-red-700 dark:text-red-400">
+                            <i class="fas fa-exclamation-triangle mr-1.5"></i>
+                            <strong>Reload error:</strong> ${ modelsConfigData.reload_error }
+                        </p>
+                        <p class="text-xs text-red-600 dark:text-red-500 mt-1">
+                            Config file was saved, but the registry failed to reload. Check that env vars (e.g. <code>${'${AZURE_TRANSCRIPTION_API_KEY}'}</code>) are set.
+                        </p>
+                    </div>
+
+                    <!-- Path Info -->
+                    <p v-if="modelsConfigData.config_path" class="mt-3 text-xs text-[var(--text-muted)]">
+                        <i class="fas fa-folder mr-1"></i> Config path: <code>${ modelsConfigData.config_path }</code>
+                    </p>
+                </div>
+
             </div>
         </main>
 
@@ -1826,6 +1924,13 @@ Summarization Instructions:
 - **Key Decisions Made**: A bulleted list of any decisions reached
 - **Action Items**: A bulleted list of tasks assigned, including who is responsible if mentioned`;
                 
+                // Models Config state
+                const modelsConfigYaml = ref('');
+                const modelsConfigData = ref({ exists: false, example: '', active_models: [], is_multi_model: false, config_path: '', reload_error: null });
+                const isSavingModelsConfig = ref(false);
+                const modelsConfigMessage = ref('');
+                const modelsConfigError = ref(false);
+
                 // Computed properties
                 const filteredUsers = computed(() => {
                     if (!userSearchQuery.value) return users.value;
@@ -2992,7 +3097,68 @@ Summarization Instructions:
                     promptSaveMessage.value = t('adminDashboard.promptResetMessage');
                     promptSaveError.value = false;
                 };
-                
+
+                // Models Config methods
+                const loadModelsConfig = async () => {
+                    try {
+                        const response = await fetch('/admin/models-config');
+                        if (!response.ok) throw new Error('Failed to load models config');
+                        const data = await response.json();
+                        modelsConfigData.value = data;
+                        modelsConfigYaml.value = data.content || '';
+                    } catch (error) {
+                        console.error('Error loading models config:', error);
+                        modelsConfigMessage.value = 'Failed to load config';
+                        modelsConfigError.value = true;
+                    }
+                };
+
+                const saveModelsConfig = async () => {
+                    isSavingModelsConfig.value = true;
+                    modelsConfigMessage.value = '';
+                    modelsConfigError.value = false;
+
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                        const response = await fetch('/admin/models-config', {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
+                            },
+                            body: JSON.stringify({ content: modelsConfigYaml.value })
+                        });
+
+                        const data = await response.json();
+                        if (!response.ok) {
+                            modelsConfigMessage.value = data.error || 'Failed to save';
+                            modelsConfigError.value = true;
+                            return;
+                        }
+
+                        modelsConfigData.value.active_models = data.active_models;
+                        modelsConfigData.value.is_multi_model = data.is_multi_model;
+                        modelsConfigData.value.exists = !!modelsConfigYaml.value.trim();
+                        modelsConfigData.value.reload_error = data.reload_error || null;
+
+                        if (data.reload_error) {
+                            modelsConfigMessage.value = 'Saved, but reload failed — check env vars';
+                            modelsConfigError.value = true;
+                        } else {
+                            modelsConfigMessage.value = data.action === 'removed' ? 'Config removed, reverted to env-based mode' : 'Config saved & reloaded successfully';
+                            modelsConfigError.value = false;
+                        }
+
+                        setTimeout(() => { modelsConfigMessage.value = ''; }, 5000);
+                    } catch (error) {
+                        console.error('Error saving models config:', error);
+                        modelsConfigMessage.value = 'Network error saving config';
+                        modelsConfigError.value = true;
+                    } finally {
+                        isSavingModelsConfig.value = false;
+                    }
+                };
+
                 const loadInquireStatus = async () => {
                     try {
                         const response = await fetch('/admin/inquire/status');
@@ -3251,7 +3417,14 @@ Summarization Instructions:
                     promptSaveError,
                     showFullPromptStructure,
                     originalDefaultPrompt,
-                    
+
+                    // Models Config state
+                    modelsConfigYaml,
+                    modelsConfigData,
+                    isSavingModelsConfig,
+                    modelsConfigMessage,
+                    modelsConfigError,
+
                     // Computed
                     filteredUsers,
                     availableUsers,
@@ -3312,7 +3485,11 @@ Summarization Instructions:
                     // Default Prompts methods
                     loadDefaultPrompt,
                     saveDefaultPrompt,
-                    resetDefaultPrompt
+                    resetDefaultPrompt,
+
+                    // Models Config methods
+                    loadModelsConfig,
+                    saveModelsConfig
                 };
             },
             delimiters: ['${', '}'] // Use different delimiters to avoid conflict with Flask's Jinja2

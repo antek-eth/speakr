@@ -1144,6 +1144,143 @@ def admin_inquire_status():
         current_app.logger.error(f"Error getting inquire status: {e}")
         return jsonify({'error': str(e)}), 500
 
+# --- Transcription Models Config API (Admin Only) ---
+
+def _get_models_config_path():
+    """Return the path to transcription-models.yaml, preferring Docker location."""
+    project_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        'config', 'transcription-models.yaml'
+    )
+    docker_path = '/app/config/transcription-models.yaml'
+    if os.path.exists(docker_path):
+        return docker_path
+    if os.path.exists(project_path):
+        return project_path
+    # Default to Docker path for new files
+    if os.path.exists('/app/config'):
+        return docker_path
+    return project_path
+
+
+@admin_bp.route('/admin/models-config', methods=['GET'])
+@login_required
+def get_models_config():
+    """Get the current transcription-models.yaml content."""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    config_path = _get_models_config_path()
+    example_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        'config', 'transcription-models.example.yaml'
+    )
+    # Also check Docker path for example
+    if not os.path.exists(example_path):
+        example_path = '/app/config/transcription-models.example.yaml'
+
+    content = ''
+    exists = os.path.exists(config_path)
+    if exists:
+        with open(config_path, 'r') as f:
+            content = f.read()
+
+    example_content = ''
+    if os.path.exists(example_path):
+        with open(example_path, 'r') as f:
+            example_content = f.read()
+
+    # Get current active models from registry
+    from src.services.transcription import get_registry
+    registry = get_registry()
+    active_models = registry.list_models() if registry.is_multi_model() else []
+
+    return jsonify({
+        'content': content,
+        'exists': exists,
+        'example': example_content,
+        'active_models': active_models,
+        'is_multi_model': registry.is_multi_model(),
+        'config_path': config_path
+    })
+
+
+@admin_bp.route('/admin/models-config', methods=['PUT'])
+@login_required
+def save_models_config():
+    """Save the transcription-models.yaml content and reload."""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    data = request.get_json()
+    content = (data or {}).get('content', '')
+
+    config_path = _get_models_config_path()
+
+    # Validate YAML syntax before saving
+    if content.strip():
+        try:
+            import yaml
+            parsed = yaml.safe_load(content)
+            if not isinstance(parsed, dict) or 'models' not in parsed:
+                return jsonify({'error': 'YAML must contain a top-level "models" key'}), 400
+            if not isinstance(parsed['models'], list):
+                return jsonify({'error': '"models" must be a list'}), 400
+            for i, model in enumerate(parsed['models']):
+                if not model.get('id'):
+                    return jsonify({'error': f'Model #{i+1} is missing required "id" field'}), 400
+                if not model.get('name'):
+                    return jsonify({'error': f'Model #{i+1} is missing required "name" field'}), 400
+                if not model.get('connector'):
+                    return jsonify({'error': f'Model #{i+1} is missing required "connector" field'}), 400
+        except yaml.YAMLError as e:
+            return jsonify({'error': f'Invalid YAML syntax: {e}'}), 400
+
+    # Ensure config directory exists
+    config_dir = os.path.dirname(config_path)
+    os.makedirs(config_dir, exist_ok=True)
+
+    if content.strip():
+        with open(config_path, 'w') as f:
+            f.write(content)
+        action = 'saved'
+    else:
+        # Empty content = delete config (revert to env-based)
+        if os.path.exists(config_path):
+            os.remove(config_path)
+        action = 'removed'
+
+    # Reload the registry with new config
+    reload_error = None
+    try:
+        from src.services.transcription import get_registry
+        registry = get_registry()
+        registry.reinitialize()
+
+        if content.strip() and os.path.exists(config_path):
+            registry.load_models_config(config_path)
+            current_app.logger.info(f"Reloaded multi-model config: {[m['id'] for m in registry.list_models()]}")
+        else:
+            registry.initialize_from_env()
+            current_app.logger.info("Reverted to single-model env config")
+    except Exception as e:
+        reload_error = str(e)
+        current_app.logger.error(f"Failed to reload models config: {e}")
+
+    active_models = registry.list_models() if registry.is_multi_model() else []
+
+    result = {
+        'success': True,
+        'action': action,
+        'active_models': active_models,
+        'is_multi_model': registry.is_multi_model()
+    }
+    if reload_error:
+        result['reload_error'] = reload_error
+
+    return jsonify(result)
+
+
 # --- Group Management API (Admin Only) ---
 
 
