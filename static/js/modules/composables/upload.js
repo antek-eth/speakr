@@ -36,7 +36,7 @@ export function useUpload(state, utils) {
         maxFileSizeMB, chunkingEnabled, chunkingMode, chunkingLimit, maxConcurrentUploads,
         recordings, selectedRecording, totalRecordings, globalError,
         selectedTagIds, uploadLanguage, uploadMinSpeakers, uploadMaxSpeakers, uploadHotwords, uploadInitialPrompt,
-        useAsrEndpoint, connectorSupportsDiarization, availableModels, selectedModelId, asrLanguage, asrMinSpeakers, asrMaxSpeakers,
+        useAsrEndpoint, connectorSupportsDiarization, availableModels, selectedModelId, importUrl, importingUrl, importError, asrLanguage, asrMinSpeakers, asrMaxSpeakers,
         dragover, availableTags, uploadTagSearchFilter,
         // Folder state
         availableFolders, selectedFolderId,
@@ -67,6 +67,65 @@ export function useUpload(state, utils) {
     function onModelSelected() {
         if (selectedModelId.value) {
             localStorage.setItem('speakr_selected_model', selectedModelId.value);
+        }
+    }
+
+    // URL import validation and logic
+    const isValidImportUrl = computed(() => {
+        const url = importUrl.value.trim();
+        if (!url) return false;
+        return /^https?:\/\/[^\s/$.?#].[^\s]{3,}$/i.test(url);
+    });
+
+    async function startUrlImport() {
+        const url = importUrl.value.trim();
+        if (!url || !isValidImportUrl.value) return;
+
+        importingUrl.value = true;
+        importError.value = '';
+
+        try {
+            const payload = {
+                url: url,
+                model_id: selectedModelId.value || null,
+                tags: selectedTagIds.value || [],
+                language: uploadLanguage.value || '',
+                hotwords: uploadHotwords.value || '',
+                initial_prompt: uploadInitialPrompt.value || '',
+                min_speakers: uploadMinSpeakers.value || null,
+                max_speakers: uploadMaxSpeakers.value || null,
+            };
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            const resp = await fetch('/api/recordings/import-url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
+                },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                importError.value = data.error || t('upload.importFailed');
+                return;
+            }
+
+            // Success — prepend recording to list
+            importUrl.value = '';
+            recordings.value.unshift(data);
+            totalRecordings.value++;
+            showToast(t('upload.queuedForTranscription'), 'fa-check-circle');
+
+            // Switch to recordings list view
+            currentView.value = 'list';
+
+        } catch (e) {
+            importError.value = e.message || 'Network error';
+        } finally {
+            importingUrl.value = false;
         }
     }
 
@@ -825,5 +884,8 @@ export function useUpload(state, utils) {
         // Multi-model
         selectedModel,
         onModelSelected,
+        // URL import
+        isValidImportUrl,
+        startUrlImport,
     };
 }

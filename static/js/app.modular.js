@@ -574,6 +574,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const connectorSupportsSpeakerCount = ref(false);  // Connector capability for min/max speakers
             const availableModels = ref([]);
             const selectedModelId = ref(null);
+            const importUrl = ref('');
+            const importingUrl = ref(false);
+            const importError = ref('');
             const currentUserName = ref('');
             const canDeleteRecordings = ref(true);
             const enableInternalSharing = ref(false);
@@ -742,7 +745,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 openAsrDropdownIndex,
 
                 // App Config
-                useAsrEndpoint, connectorSupportsDiarization, connectorSupportsSpeakerCount, availableModels, selectedModelId, currentUserName, canDeleteRecordings, enableInternalSharing, enableArchiveToggle, showUsernamesInUI,
+                useAsrEndpoint, connectorSupportsDiarization, connectorSupportsSpeakerCount, availableModels, selectedModelId, importUrl, importingUrl, importError, currentUserName, canDeleteRecordings, enableInternalSharing, enableArchiveToggle, showUsernamesInUI,
 
                 // Internal Sharing
                 showUnifiedShareModal, internalShareUserSearch, internalShareSearchResults,
