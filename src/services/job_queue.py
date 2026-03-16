@@ -400,6 +400,7 @@ class FairJobQueue:
             tag_id=params.get('tag_id'),
             hotwords=params.get('hotwords'),
             initial_prompt=params.get('initial_prompt'),
+            model_id=params.get('model_id'),
         )
 
     def _run_summarization(self, job, recording, params):
@@ -434,6 +435,7 @@ class FairJobQueue:
             tag_id=params.get('tag_id'),
             hotwords=params.get('hotwords'),
             initial_prompt=params.get('initial_prompt'),
+            model_id=params.get('model_id'),
         )
 
     def _run_reprocess_summary(self, job, recording, params):

@@ -2079,6 +2079,14 @@ def upload_file():
         hotwords = request.form.get('hotwords', '').strip() or None
         initial_prompt = request.form.get('initial_prompt', '').strip() or None
 
+        # Multi-model: extract and validate selected model ID
+        model_id = request.form.get('model_id', '').strip() or None
+        if model_id:
+            from src.services.transcription import get_registry
+            registry = get_registry()
+            if not registry.validate_model_id(model_id):
+                return jsonify({'error': f'Unknown transcription model: {model_id}'}), 400
+
         # Convert to int if provided
         if min_speakers:
             try:
@@ -2182,7 +2190,8 @@ def upload_file():
             notes=notes,
             folder_id=selected_folder.id if selected_folder else None,
             processing_source='upload',  # Track that this was manually uploaded
-            file_hash=file_hash
+            file_hash=file_hash,
+            transcription_model_id=model_id,
         )
         db.session.add(recording)
         db.session.commit()
@@ -2213,6 +2222,7 @@ def upload_file():
             'tag_id': first_tag.id if first_tag else None,
             'hotwords': hotwords,
             'initial_prompt': initial_prompt,
+            'model_id': model_id,
         }
 
         current_app.logger.info(f"Queueing transcription for recording {recording.id} with params: {job_params}")

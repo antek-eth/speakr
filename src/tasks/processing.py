@@ -1416,7 +1416,7 @@ def transcribe_chunks_with_connector(connector, filepath, filename, mime_type, l
             raise ChunkProcessingError(f"Chunked transcription failed: {str(e)}")
 
 
-def transcribe_with_connector(app_context, recording_id, filepath, original_filename, start_time, mime_type=None, language=None, diarize=None, min_speakers=None, max_speakers=None, tag_id=None, hotwords=None, initial_prompt=None):
+def transcribe_with_connector(app_context, recording_id, filepath, original_filename, start_time, mime_type=None, language=None, diarize=None, min_speakers=None, max_speakers=None, tag_id=None, hotwords=None, initial_prompt=None, model_id=None):
     """
     Transcribe audio using the new connector-based architecture.
 
@@ -1457,10 +1457,10 @@ def transcribe_with_connector(app_context, recording_id, filepath, original_file
             transcription_start_time = time.time()
             db.session.commit()
 
-            # Get the active transcription connector
-            connector = get_connector()
+            # Get the transcription connector (multi-model or default)
+            connector = get_connector(model_id)
             connector_name = connector.PROVIDER_NAME
-            current_app.logger.info(f"Using transcription connector: {connector_name}")
+            current_app.logger.info(f"Using transcription connector: {connector_name}" + (f" (model: {model_id})" if model_id else ""))
 
             # Check transcription budget before processing
             can_proceed, usage_pct, budget_msg = transcription_tracker.check_budget(recording.user_id)
@@ -1871,7 +1871,7 @@ def transcribe_with_connector(app_context, recording_id, filepath, original_file
             raise
 
 
-def transcribe_audio_task(app_context, recording_id, filepath, filename_for_asr, start_time, language=None, min_speakers=None, max_speakers=None, tag_id=None, hotwords=None, initial_prompt=None):
+def transcribe_audio_task(app_context, recording_id, filepath, filename_for_asr, start_time, language=None, min_speakers=None, max_speakers=None, tag_id=None, hotwords=None, initial_prompt=None, model_id=None):
     """Runs the transcription and summarization in a background thread.
 
     Uses the connector-based architecture which supports:
@@ -1920,6 +1920,7 @@ def transcribe_audio_task(app_context, recording_id, filepath, filename_for_asr,
         tag_id=tag_id,
         hotwords=hotwords,
         initial_prompt=initial_prompt,
+        model_id=model_id,
     )
 
     # After transcription completes, calculate processing time
