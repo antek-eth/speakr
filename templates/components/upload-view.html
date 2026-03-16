@@ -113,6 +113,29 @@
                 </div>
             </div>
 
+            <!-- Transcription Model Picker (only shown if multi-model is available) -->
+            <div v-if="availableModels.length > 1" class="mt-4">
+                <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                    <i class="fas fa-brain mr-1 text-[var(--text-muted)]"></i>
+                    ${ t('upload.transcriptionModel') }
+                </label>
+                <div class="relative">
+                    <select v-model="selectedModelId"
+                            @change="onModelSelected"
+                            class="w-full pl-8 pr-8 py-2 text-sm rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)] appearance-none border border-[var(--border-secondary)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:bg-[var(--bg-input)] transition-colors">
+                        <option v-for="model in availableModels" :key="model.id" :value="model.id">
+                            ${ model.name }
+                        </option>
+                    </select>
+                    <i class="fas fa-brain absolute left-2.5 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)]"></i>
+                    <i class="fas fa-chevron-down absolute right-2.5 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" style="font-size: 10px;"></i>
+                </div>
+                <p v-if="selectedModel && !selectedModel.capabilities.diarization" class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    ${ t('upload.modelNoDiarization') }
+                </p>
+            </div>
+
             <!-- Folder Selection (only shown if folders are enabled) -->
             <div v-if="foldersEnabled" class="mt-4">
                 <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">
@@ -261,7 +284,7 @@
             </div>
 
             <!-- Advanced Options for diarization-enabled connectors (collapsible) -->
-            <div v-if="connectorSupportsDiarization" class="mt-4">
+            <div v-if="connectorSupportsDiarization || (selectedModel && selectedModel.capabilities.diarization)" class="mt-4">
                 <button @click="showAdvancedOptions = !showAdvancedOptions"
                         class="w-full flex items-center justify-between px-3 py-2 bg-[var(--bg-tertiary)] rounded-md hover:bg-[var(--bg-accent)] transition-colors text-xs font-medium">
                     <span class="flex items-center gap-2 text-[var(--text-secondary)]">
@@ -284,7 +307,7 @@
                     </div>
 
                     <!-- Speaker Settings - only show for connectors that support min/max speakers -->
-                    <div v-if="connectorSupportsSpeakerCount" class="grid grid-cols-2 gap-3">
+                    <div v-if="connectorSupportsSpeakerCount && (!selectedModel || selectedModel.capabilities.diarization)" class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-medium text-[var(--text-secondary)] mb-1" v-text="t('form.minSpeakers')">
                             </label>
