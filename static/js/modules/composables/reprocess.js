@@ -36,6 +36,7 @@ export function useReprocess(state, utils) {
             asrReprocessOptions.language = '';
             asrReprocessOptions.min_speakers = '';
             asrReprocessOptions.max_speakers = '';
+            asrReprocessOptions.model_id = (recording || selectedRecording.value)?.transcription_model_id || '';
         } else {
             summaryReprocessPromptSource.value = 'default';
             summaryReprocessSelectedTagId.value = '';
@@ -116,7 +117,8 @@ export function useReprocess(state, utils) {
                 recordingId,
                 asrReprocessOptions.language,
                 asrReprocessOptions.min_speakers,
-                asrReprocessOptions.max_speakers
+                asrReprocessOptions.max_speakers,
+                asrReprocessOptions.model_id
             );
         } else {
             await reprocessSummary(
@@ -132,7 +134,7 @@ export function useReprocess(state, utils) {
     // Transcription Reprocessing
     // =========================================
 
-    const reprocessTranscription = async (recordingId, language, minSpeakers, maxSpeakers) => {
+    const reprocessTranscription = async (recordingId, language, minSpeakers, maxSpeakers, modelId) => {
         if (!recordingId) {
             setGlobalError('No recording ID provided for reprocessing.');
             return;
@@ -145,6 +147,7 @@ export function useReprocess(state, utils) {
             };
             if (minSpeakers && minSpeakers !== '') requestBody.min_speakers = parseInt(minSpeakers);
             if (maxSpeakers && maxSpeakers !== '') requestBody.max_speakers = parseInt(maxSpeakers);
+            if (modelId) requestBody.model_id = modelId;
 
             const response = await fetch(`/recording/${recordingId}/reprocess_transcription`, {
                 method: 'POST',

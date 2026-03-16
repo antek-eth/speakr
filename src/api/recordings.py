@@ -1007,11 +1007,22 @@ def reprocess_transcription(recording_id):
             except (ValueError, TypeError):
                 max_speakers = None
 
+        # Multi-model: accept model_id for reprocessing
+        model_id = (data.get('model_id') or '').strip() or None
+        if model_id:
+            from src.services.transcription import get_registry
+            registry = get_registry()
+            if not registry.validate_model_id(model_id):
+                return jsonify({'error': f'Unknown transcription model: {model_id}'}), 400
+            recording.transcription_model_id = model_id
+            db.session.commit()
+
         # Enqueue the job with all parameters
         job_params = {
             'language': language,
             'min_speakers': min_speakers,
-            'max_speakers': max_speakers
+            'max_speakers': max_speakers,
+            'model_id': model_id or recording.transcription_model_id,
         }
 
         job_id = job_queue.enqueue(

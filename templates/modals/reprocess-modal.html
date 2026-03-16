@@ -56,6 +56,16 @@
                     </div>
                 </div>
 
+                <!-- Model Selection - show when multi-model is available -->
+                <div v-if="reprocessType === 'transcription' && availableModels.length > 1" class="space-y-4 pt-4 border-t border-[var(--border-primary)]">
+                    <div>
+                        <label for="reprocess-model-select" class="block text-sm font-medium text-[var(--text-muted)]">Transcription Model</label>
+                        <select id="reprocess-model-select" v-model="asrReprocessOptions.model_id" class="mt-1 block w-full px-3 py-2 border border-[var(--border-secondary)] rounded-md shadow-sm focus:outline-none focus:ring-[var(--border-focus)] focus:border-[var(--border-focus)] sm:text-sm bg-[var(--bg-input)] text-[var(--text-primary)]">
+                            <option v-for="model in availableModels" :key="model.id" :value="model.id">${ model.name }</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Language Selection - show for all transcription reprocessing -->
                 <div v-if="reprocessType === 'transcription'" class="space-y-4 pt-4 border-t border-[var(--border-primary)]">
                     <div>
