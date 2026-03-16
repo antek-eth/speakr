@@ -550,6 +550,12 @@ def initialize_database(app):
         except Exception as e:
             app.logger.warning(f"Could not create index on recording.folder_id: {e}")
 
+        # Multi-model transcription support
+        if add_column_if_not_exists(engine, 'recording', 'transcription_model_id', 'VARCHAR(64)'):
+            app.logger.info("Added transcription_model_id column to recording table")
+        if add_column_if_not_exists(engine, 'recording', 'source_url', 'VARCHAR(2048)'):
+            app.logger.info("Added source_url column to recording table")
+
         # Initialize default system settings
         if not SystemSetting.query.filter_by(key='transcript_length_limit').first():
             SystemSetting.set_setting(
