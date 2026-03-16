@@ -49,3 +49,6 @@ unraid/
 
 # Git worktrees
 .worktrees/
+
+# Live transcription models config (contains deployment-specific values)
+config/transcription-models.yaml

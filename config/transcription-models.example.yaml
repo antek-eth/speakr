@@ -1,0 +1,64 @@
+# Transcription Models Configuration
+#
+# Copy this file to transcription-models.yaml and fill in your API keys.
+# Restart the container after changes.
+#
+# Define multiple transcription providers and models.
+# Users can choose which model to use per upload.
+#
+# Environment variables are referenced as ${VAR_NAME} and resolved at startup.
+# Missing variables will cause a startup error — fail loud, don't silently skip.
+#
+# If transcription-models.yaml doesn't exist, Speakr falls back to single-model
+# behavior using TRANSCRIPTION_CONNECTOR / TRANSCRIPTION_MODEL env vars.
+
+models:
+  # Azure OpenAI GPT-4o with diarization (speaker identification)
+  - id: azure-gpt4o-diarize
+    name: "GPT-4o Transcribe + Diarize"
+    connector: azure_openai_transcribe
+    default: true
+    config:
+      endpoint: ${AZURE_TRANSCRIPTION_ENDPOINT}
+      api_key: ${AZURE_TRANSCRIPTION_API_KEY}
+      deployment_name: gpt-4o-transcribe-diarize
+      api_version: "2025-04-01-preview"
+    capabilities:
+      diarization: true
+      max_file_size_mb: 25
+      max_duration_seconds: 1380
+
+  # Azure OpenAI GPT-4o without diarization (faster, cheaper)
+  - id: azure-gpt4o
+    name: "GPT-4o Transcribe"
+    connector: azure_openai_transcribe
+    config:
+      endpoint: ${AZURE_TRANSCRIPTION_ENDPOINT}
+      api_key: ${AZURE_TRANSCRIPTION_API_KEY}
+      deployment_name: gpt-4o-transcribe
+      api_version: "2025-04-01-preview"
+    capabilities:
+      diarization: false
+      max_file_size_mb: 25
+
+  # OpenAI Whisper-1 (basic, no diarization)
+  - id: openai-whisper
+    name: "Whisper-1 (OpenAI)"
+    connector: openai_whisper
+    config:
+      api_key: ${OPENAI_API_KEY}
+    capabilities:
+      diarization: false
+      max_file_size_mb: 25
+
+# Available connectors:
+#   openai_whisper          - OpenAI Whisper API
+#   openai_transcribe       - OpenAI GPT-4o Transcribe
+#   azure_openai_transcribe - Azure OpenAI (requires endpoint + deployment_name)
+#   asr_endpoint            - Self-hosted ASR (WhisperX, whisper-asr-webservice)
+#
+# Deployment:
+#   1. Copy this file to config/transcription-models.yaml
+#   2. Set the referenced environment variables (AZURE_TRANSCRIPTION_ENDPOINT, etc.)
+#   3. Restart the container: docker compose restart speakr
+#   4. Users will see the model picker in the upload dialog
