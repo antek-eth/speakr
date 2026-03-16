@@ -229,6 +229,8 @@ class Recording(db.Model):
             'folder_id': self.folder_id,
             'folder': self.folder.to_dict() if self.folder else None,
             'tags': [tag.to_dict() for tag in visible_tags] if visible_tags else [],
+            'transcription_model_id': self.transcription_model_id,
+            'source_url': self.source_url,
             'duplicate_info': self.get_duplicate_info(),
             'shared_with_count': shared_with_count,
             'public_share_count': public_share_count
@@ -289,6 +291,8 @@ class Recording(db.Model):
             'folder': self.folder.to_dict() if self.folder else None,
             'tags': [tag.to_dict() for tag in visible_tags] if visible_tags else [],
             'events': [event.to_dict() for event in self.events] if self.events else [],
+            'transcription_model_id': self.transcription_model_id,
+            'source_url': self.source_url,
             'duplicate_info': self.get_duplicate_info(),
             'shared_with_count': shared_with_count,
             'public_share_count': public_share_count
