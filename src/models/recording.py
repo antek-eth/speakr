@@ -50,6 +50,10 @@ class Recording(db.Model):
     # Speaker embeddings from diarization (JSON dict mapping speaker IDs to 256-dimensional vectors)
     speaker_embeddings = db.Column(db.JSON, nullable=True)
 
+    # Multi-model transcription support
+    transcription_model_id = db.Column(db.String(64), nullable=True)  # Model ID from transcription-models.yaml
+    source_url = db.Column(db.String(2048), nullable=True)  # Source URL for URL imports
+
     # Folder relationship (one-to-many: a recording belongs to at most one folder)
     folder_id = db.Column(db.Integer, db.ForeignKey('folder.id', ondelete='SET NULL'), nullable=True, index=True)
 
