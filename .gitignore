@@ -46,3 +46,6 @@ docs/.github-deploy.yml
 # Documentation conversion scripts (one-time use)
 scripts/convert_to_mkdocs.py
 unraid/
+
+# Git worktrees
+.worktrees/
