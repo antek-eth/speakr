@@ -38,6 +38,10 @@ class ConnectorRegistry:
             return
         self._register_builtin_connectors()
         self._initialized = True
+        self._model_connectors = {}
+        self._model_configs = []  # Sanitized: no secrets
+        self._default_model_id = ""
+        self._yaml_loaded = False
 
     def _register_builtin_connectors(self):
         """Register all built-in connectors."""
@@ -298,17 +302,117 @@ class ConnectorRegistry:
         return self._connector_name
 
     def reinitialize(self) -> BaseTranscriptionConnector:
-        """
-        Force re-initialization of the connector.
-
-        Useful when environment variables have changed.
-
-        Returns:
-            The newly initialized connector
-        """
+        """Force re-initialization of the connector."""
         self._active_connector = None
         self._connector_name = ""
+        self._model_connectors = {}
+        self._model_configs = []
+        self._default_model_id = ""
+        self._yaml_loaded = False
         return self.initialize_from_env()
+
+    def load_models_config(self, path: str) -> None:
+        """
+        Load multi-model config from YAML and instantiate connectors.
+
+        Args:
+            path: Path to transcription-models.yaml
+        """
+        from .config_loader import load_models_config
+
+        models = load_models_config(path)
+        if models is None:
+            return  # No YAML file — fall back to env-based init
+
+        self._model_connectors = {}
+        self._yaml_loaded = True
+
+        # Store sanitized model configs (no secrets) for UI
+        self._model_configs = []
+        for model in models:
+            self._model_configs.append({
+                'id': model['id'],
+                'name': model['name'],
+                'default': bool(model.get('default')),
+                'capabilities': model.get('capabilities', {}),
+            })
+
+        for model in models:
+            model_id = model['id']
+            connector_name = model['connector']
+            config = model.get('config', {})
+
+            connector = self.create_connector(connector_name, config)
+            self._model_connectors[model_id] = connector
+
+            if model.get('default'):
+                self._default_model_id = model_id
+                # Also set as active connector for backwards compat
+                self._active_connector = connector
+                self._connector_name = connector_name
+
+            logger.info(f"Loaded model '{model_id}' using connector '{connector_name}'")
+
+        logger.info(f"Multi-model config loaded: {len(models)} models, default='{self._default_model_id}'")
+
+    def get_connector(self, model_id: str = None) -> BaseTranscriptionConnector:
+        """
+        Get connector by model ID, or default connector.
+
+        Args:
+            model_id: Model ID from YAML config. If None, returns default.
+
+        Returns:
+            Connector instance for the given model.
+
+        Raises:
+            ConfigurationError: If model_id is provided but unknown.
+        """
+        if model_id and model_id in self._model_connectors:
+            return self._model_connectors[model_id]
+
+        if self._yaml_loaded:
+            if model_id:
+                raise ConfigurationError(
+                    f"Unknown model_id: '{model_id}'. "
+                    f"Available: {list(self._model_connectors.keys())}"
+                )
+            return self._model_connectors.get(self._default_model_id) or self.get_active_connector()
+
+        # Fallback to single-connector mode
+        return self.get_active_connector()
+
+    def validate_model_id(self, model_id: str) -> bool:
+        """
+        Check if a model_id is valid.
+
+        When no YAML is loaded, only None/empty is valid (no multi-model support).
+        When YAML is loaded, model_id must exist in the config or be None/empty.
+        """
+        if not model_id:
+            return True  # None/empty = use default (always valid)
+        if not self._yaml_loaded:
+            return False  # No YAML = reject non-empty model_id
+        return model_id in self._model_connectors
+
+    def list_models(self) -> List[Dict[str, Any]]:
+        """
+        List available transcription models for the UI.
+
+        Returns:
+            List of {id, name, default, capabilities} dicts. Never exposes config/secrets.
+        """
+        if not self._yaml_loaded:
+            return []
+        return list(self._model_configs)
+
+    def get_default_model_id(self) -> str:
+        """Get the default model ID, or empty string if no YAML loaded."""
+        return self._default_model_id
+
+    def is_multi_model(self) -> bool:
+        """Check if multi-model config is loaded."""
+        return self._yaml_loaded
 
 
 # Global registry instance
@@ -343,9 +447,9 @@ def transcribe(request: TranscriptionRequest) -> TranscriptionResponse:
     return connector.transcribe(request)
 
 
-def get_connector() -> BaseTranscriptionConnector:
-    """Get the active transcription connector."""
-    return get_registry().get_active_connector()
+def get_connector(model_id: str = None) -> BaseTranscriptionConnector:
+    """Get a transcription connector, optionally by model ID."""
+    return get_registry().get_connector(model_id)
 
 
 def supports_diarization() -> bool:
