@@ -398,6 +398,56 @@ models:
             ConnectorRegistry._initialized = False
 
 
+# === URL Import Tests ===
+
+def test_url_validation_rejects_empty():
+    from src.services.url_import import validate_import_url
+    valid, error = validate_import_url('')
+    assert not valid, "Empty URL should be invalid"
+
+
+def test_url_validation_accepts_youtube():
+    from src.services.url_import import validate_import_url
+    valid, error = validate_import_url('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+    assert valid, f"YouTube URL should be valid, got error: {error}"
+
+
+def test_url_validation_accepts_twitter():
+    from src.services.url_import import validate_import_url
+    valid, error = validate_import_url('https://x.com/user/status/123456789')
+    assert valid, f"Twitter URL should be valid, got error: {error}"
+
+
+def test_url_validation_rejects_non_url():
+    from src.services.url_import import validate_import_url
+    valid, error = validate_import_url('not a url at all')
+    assert not valid, "Non-URL should be invalid"
+
+
+def test_url_validation_rejects_localhost():
+    from src.services.url_import import validate_import_url
+    valid, error = validate_import_url('http://localhost:8080/video.mp4')
+    assert not valid, "Localhost URL should be rejected (SSRF)"
+
+
+def test_url_validation_rejects_private_ip():
+    from src.services.url_import import validate_import_url
+    valid, error = validate_import_url('http://192.168.1.1/video.mp4')
+    assert not valid, "Private IP URL should be rejected (SSRF)"
+
+
+def test_url_validation_rejects_file_scheme():
+    from src.services.url_import import validate_import_url
+    valid, error = validate_import_url('file:///etc/passwd')
+    assert not valid, "file:// scheme should be rejected"
+
+
+def test_sanitize_ytdlp_error():
+    from src.services.url_import import sanitize_ytdlp_error
+    assert 'unavailable' in sanitize_ytdlp_error('ERROR: Video unavailable').lower()
+    assert sanitize_ytdlp_error('some internal /path/to/file error') != 'some internal /path/to/file error'
+
+
 if __name__ == '__main__':
     print("\n=== Multi-Model Tests ===\n")
 
@@ -419,6 +469,16 @@ if __name__ == '__main__':
     run_test("Registry backwards compat", test_registry_get_active_connector_backwards_compat)
     run_test("Registry default model ID", test_registry_default_model_id)
     run_test("Registry reinitialize clears multi-model", test_registry_reinitialize_clears_multi_model)
+
+    print("\n-- URL Import Tests --")
+    run_test("URL validation rejects empty", test_url_validation_rejects_empty)
+    run_test("URL validation accepts YouTube", test_url_validation_accepts_youtube)
+    run_test("URL validation accepts Twitter", test_url_validation_accepts_twitter)
+    run_test("URL validation rejects non-URL", test_url_validation_rejects_non_url)
+    run_test("URL validation rejects localhost (SSRF)", test_url_validation_rejects_localhost)
+    run_test("URL validation rejects private IP (SSRF)", test_url_validation_rejects_private_ip)
+    run_test("URL validation rejects file scheme", test_url_validation_rejects_file_scheme)
+    run_test("Sanitize yt-dlp error messages", test_sanitize_ytdlp_error)
 
     print(f"\n{'='*50}")
     print(f"Results: {PASSED} passed, {FAILED} failed")
