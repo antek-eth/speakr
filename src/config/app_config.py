@@ -123,11 +123,36 @@ def initialize_config(app):
         try:
             from src.services.transcription import get_registry
             registry = get_registry()
-            connector = registry.initialize_from_env()
+
+            # Try multi-model YAML config first
+            yaml_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                'config', 'transcription-models.yaml'
+            )
+            # Also check /app/config/ for Docker deployments
+            if not os.path.exists(yaml_path):
+                yaml_path = '/app/config/transcription-models.yaml'
+
+            if os.path.exists(yaml_path):
+                registry.load_models_config(yaml_path)
+                app.logger.info(f"Loaded multi-model config from {yaml_path}")
+                models = registry.list_models()
+                app.logger.info(f"Available transcription models: {[m['id'] for m in models]}")
+                app.logger.info(f"Default model: {registry.get_default_model_id()}")
+            else:
+                app.logger.info("No transcription-models.yaml found, using single-model env config")
+
+            # If YAML didn't load (or didn't exist), fall back to env-based init
+            if not registry.is_multi_model():
+                connector = registry.initialize_from_env()
+            else:
+                # Get the default connector for capability logging
+                connector = registry.get_active_connector()
+
             connector_name = registry.get_active_connector_name()
             capabilities = [c.name for c in connector.get_capabilities()]
-            app.logger.info(f"Transcription connector initialized: {connector_name}")
-            app.logger.info(f"Connector capabilities: {capabilities}")
+            app.logger.info(f"Active transcription connector: {connector_name}")
+            app.logger.info(f"Capabilities: {capabilities}")
 
             # Log diarization support prominently
             diarize_default = getattr(connector, 'default_diarize', connector.supports_diarization)
@@ -140,8 +165,7 @@ def initialize_config(app):
 
         except Exception as e:
             app.logger.error(f"Failed to initialize transcription connector: {e}")
-            app.logger.error("Falling back to legacy transcription configuration validation")
-            # Fall through to legacy validation
+            app.logger.warning("Falling back to legacy transcription configuration")
             _validate_legacy_transcription_config(app)
     else:
         # Legacy configuration validation
