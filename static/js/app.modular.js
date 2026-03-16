@@ -1576,6 +1576,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
 
+                if (recording.transcription_model_id) {
+                    metadata.push({
+                        icon: 'fas fa-brain',
+                        text: recording.transcription_model_id
+                    });
+                }
+
+                if (recording.source_url) {
+                    const maxLength = 40;
+                    const truncated = recording.source_url.length > maxLength
+                        ? recording.source_url.substring(0, maxLength) + '...'
+                        : recording.source_url;
+                    metadata.push({
+                        icon: 'fas fa-link',
+                        text: truncated,
+                        fullText: recording.source_url,
+                        href: recording.source_url
+                    });
+                }
+
                 return metadata;
             });
 

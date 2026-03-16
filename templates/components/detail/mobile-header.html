@@ -94,7 +94,10 @@
                 <template v-if="activeRecordingMetadata" v-for="(item, index) in activeRecordingMetadata" :key="index">
                     <span v-if="!item.isTagItem" class="flex items-center gap-1.5">
                         <i :class="item.icon"></i>
-                        <span :title="item.fullText || item.text">${item.text}</span>
+                        <a v-if="item.href" :href="item.href" target="_blank" rel="noopener noreferrer"
+                           class="text-[var(--text-accent)] hover:underline truncate max-w-[200px]"
+                           :title="item.fullText || item.text" @click.stop>${item.text}</a>
+                        <span v-else :title="item.fullText || item.text">${item.text}</span>
                     </span>
                 </template>
             </div>
