@@ -50,12 +50,14 @@ class ConnectorRegistry:
         from .connectors.asr_endpoint import ASREndpointConnector
         from .connectors.azure_openai_transcribe import AzureOpenAITranscribeConnector
         from .connectors.assemblyai import AssemblyAIConnector
+        from .connectors.bedrock_converse import BedrockConverseConnector
 
         self.register('openai_whisper', OpenAIWhisperConnector)
         self.register('openai_transcribe', OpenAITranscribeConnector)
         self.register('asr_endpoint', ASREndpointConnector)
         self.register('azure_openai_transcribe', AzureOpenAITranscribeConnector)
         self.register('assemblyai', AssemblyAIConnector)
+        self.register('bedrock_converse', BedrockConverseConnector)
 
     def register(self, name: str, connector_class: Type[BaseTranscriptionConnector]):
         """

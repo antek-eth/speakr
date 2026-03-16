@@ -7,6 +7,7 @@ from .openai_transcribe import OpenAITranscribeConnector
 from .asr_endpoint import ASREndpointConnector
 from .azure_openai_transcribe import AzureOpenAITranscribeConnector
 from .assemblyai import AssemblyAIConnector
+from .bedrock_converse import BedrockConverseConnector
 
 __all__ = [
     'OpenAIWhisperConnector',
@@ -14,4 +15,5 @@ __all__ = [
     'ASREndpointConnector',
     'AzureOpenAITranscribeConnector',
     'AssemblyAIConnector',
+    'BedrockConverseConnector',
 ]

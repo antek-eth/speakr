@@ -69,6 +69,11 @@ models:
 #   azure_openai_transcribe - Azure OpenAI (requires endpoint + deployment_name)
 #   asr_endpoint            - Self-hosted ASR (WhisperX, whisper-asr-webservice)
 #   assemblyai              - AssemblyAI (universal-3-pro, universal-2, nano)
+#   bedrock_converse        - Amazon Bedrock Converse API (Voxtral, etc.)
+#
+# Bedrock models (us-east-1):
+#   mistral.voxtral-mini-3b-2507   - Voxtral Mini (3B, fastest)
+#   mistral.voxtral-small-24b-2507 - Voxtral Small (24B, more accurate)
 #
 # Deployment:
 #   1. Copy this file to config/transcription-models.yaml
