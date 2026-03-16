@@ -1319,7 +1319,8 @@
     "stuck": "Blockierte Verarbeitung zurücksetzen",
     "summarizing": "Zusammenfassung",
     "transcribing": "Transkribierung",
-    "uploading": "Upload"
+    "uploading": "Upload",
+    "downloading": "Wird heruntergeladen..."
   },
   "summary": {
     "actionItems": "Aktionspunkte",
@@ -1496,7 +1497,16 @@
     "uploadNFiles": "Upload {{count}} File(s)",
     "uploadProgress": "Upload-Fortschritt",
     "videoRetained": "Video für Wiedergabe beibehalten",
-    "willAutoSummarize": "Wird nach der Transkription automatisch zusammengefasst"
+    "willAutoSummarize": "Wird nach der Transkription automatisch zusammengefasst",
+    "transcriptionModel": "Transkriptionsmodell",
+    "modelNoDiarization": "Dieses Modell unterstützt keine Sprecheridentifikation",
+    "importUrl": "URL importieren",
+    "importUrlPlaceholder": "YouTube-, Twitter-, TikTok- oder Video-URL einfügen",
+    "importButton": "Importieren",
+    "downloading": "Wird heruntergeladen...",
+    "queuedForTranscription": "Für Transkription eingereiht",
+    "importFailed": "Import fehlgeschlagen",
+    "invalidUrl": "Bitte geben Sie eine gültige URL ein (YouTube, Twitter, TikTok, usw.)"
   },
   "uploadProgress": {
     "title": "Upload-Fortschritt"

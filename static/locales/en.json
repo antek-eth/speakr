@@ -1319,7 +1319,8 @@
     "stuck": "Reset stuck processing",
     "summarizing": "Summarizing",
     "transcribing": "Transcribing",
-    "uploading": "Uploading"
+    "uploading": "Uploading",
+    "downloading": "Downloading..."
   },
   "summary": {
     "actionItems": "Action Items",
@@ -1496,7 +1497,16 @@
     "uploadNFiles": "Upload {{count}} File(s)",
     "uploadProgress": "Upload Progress",
     "videoRetained": "Video preserved for playback",
-    "willAutoSummarize": "Will auto-summarize after transcription"
+    "willAutoSummarize": "Will auto-summarize after transcription",
+    "transcriptionModel": "Transcription Model",
+    "modelNoDiarization": "This model does not support speaker identification",
+    "importUrl": "Import URL",
+    "importUrlPlaceholder": "Paste YouTube, Twitter, TikTok, or video URL",
+    "importButton": "Import",
+    "downloading": "Downloading...",
+    "queuedForTranscription": "Queued for transcription",
+    "importFailed": "Import failed",
+    "invalidUrl": "Please enter a valid URL (YouTube, Twitter, TikTok, etc.)"
   },
   "uploadProgress": {
     "title": "Upload Progress"

@@ -1470,7 +1470,8 @@
     "stuck": "重置卡住的处理",
     "summarizing": "生成摘要中",
     "transcribing": "转录中",
-    "uploading": "上传中"
+    "uploading": "上传中",
+    "downloading": "下载中..."
   },
   "summary": {
     "actionItems": "行动事项",
@@ -1647,7 +1648,16 @@
     "uploadNFiles": "Upload {{count}} File(s)",
     "uploadProgress": "上传进度",
     "videoRetained": "视频已保留供播放",
-    "willAutoSummarize": "转录后将自动生成摘要"
+    "willAutoSummarize": "转录后将自动生成摘要",
+    "transcriptionModel": "转录模型",
+    "modelNoDiarization": "此模型不支持说话人识别",
+    "importUrl": "导入 URL",
+    "importUrlPlaceholder": "粘贴 YouTube、Twitter、TikTok 或视频 URL",
+    "importButton": "导入",
+    "downloading": "下载中...",
+    "queuedForTranscription": "已排队等待转录",
+    "importFailed": "导入失败",
+    "invalidUrl": "请输入有效的 URL（YouTube、Twitter、TikTok 等）"
   },
   "uploadProgress": {
     "title": "上传进度"

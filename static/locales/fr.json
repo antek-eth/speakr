@@ -1319,7 +1319,8 @@
     "stuck": "Réinitialiser le traitement bloqué",
     "summarizing": "Résumé",
     "transcribing": "Transcription",
-    "uploading": "Téléchargement"
+    "uploading": "Téléchargement",
+    "downloading": "Téléchargement..."
   },
   "summary": {
     "actionItems": "Actions à Mener",
@@ -1496,7 +1497,16 @@
     "uploadNFiles": "Upload {{count}} File(s)",
     "uploadProgress": "Progression du Téléchargement",
     "videoRetained": "Vidéo conservée pour la lecture",
-    "willAutoSummarize": "Résumé automatique après la transcription"
+    "willAutoSummarize": "Résumé automatique après la transcription",
+    "transcriptionModel": "Modèle de Transcription",
+    "modelNoDiarization": "Ce modèle ne prend pas en charge l'identification des locuteurs",
+    "importUrl": "Importer une URL",
+    "importUrlPlaceholder": "Coller une URL YouTube, Twitter, TikTok ou vidéo",
+    "importButton": "Importer",
+    "downloading": "Téléchargement...",
+    "queuedForTranscription": "En file d'attente pour la transcription",
+    "importFailed": "Échec de l'importation",
+    "invalidUrl": "Veuillez entrer une URL valide (YouTube, Twitter, TikTok, etc.)"
   },
   "uploadProgress": {
     "title": "Progression du Téléchargement"

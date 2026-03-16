@@ -1319,7 +1319,8 @@
     "stuck": "Restablecer procesamiento bloqueado",
     "summarizing": "Resumiendo",
     "transcribing": "Transcribiendo",
-    "uploading": "Subiendo"
+    "uploading": "Subiendo",
+    "downloading": "Descargando..."
   },
   "summary": {
     "actionItems": "Elementos de Acción",
@@ -1496,7 +1497,16 @@
     "uploadNFiles": "Upload {{count}} File(s)",
     "uploadProgress": "Progreso de Carga",
     "videoRetained": "Video conservado para reproducción",
-    "willAutoSummarize": "Se resumirá automáticamente después de la transcripción"
+    "willAutoSummarize": "Se resumirá automáticamente después de la transcripción",
+    "transcriptionModel": "Modelo de Transcripción",
+    "modelNoDiarization": "Este modelo no admite la identificación de hablantes",
+    "importUrl": "Importar URL",
+    "importUrlPlaceholder": "Pegar URL de YouTube, Twitter, TikTok o video",
+    "importButton": "Importar",
+    "downloading": "Descargando...",
+    "queuedForTranscription": "En cola para transcripción",
+    "importFailed": "Error de importación",
+    "invalidUrl": "Por favor, introduzca una URL válida (YouTube, Twitter, TikTok, etc.)"
   },
   "uploadProgress": {
     "title": "Progreso de Carga"

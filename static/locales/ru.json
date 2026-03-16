@@ -1319,7 +1319,8 @@
     "stuck": "Сбросить зависшую обработку",
     "summarizing": "Резюмирование",
     "transcribing": "Транскрибирование",
-    "uploading": "Загрузка"
+    "uploading": "Загрузка",
+    "downloading": "Загрузка..."
   },
   "summary": {
     "actionItems": "Задачи к выполнению",
@@ -1496,7 +1497,16 @@
     "uploadNFiles": "Upload {{count}} File(s)",
     "uploadProgress": "Прогресс загрузки",
     "videoRetained": "Видео сохранено для воспроизведения",
-    "willAutoSummarize": "Автоматически создаст резюме после транскрибирования"
+    "willAutoSummarize": "Автоматически создаст резюме после транскрибирования",
+    "transcriptionModel": "Модель транскрипции",
+    "modelNoDiarization": "Эта модель не поддерживает идентификацию говорящих",
+    "importUrl": "Импорт URL",
+    "importUrlPlaceholder": "Вставьте URL YouTube, Twitter, TikTok или видео",
+    "importButton": "Импортировать",
+    "downloading": "Загрузка...",
+    "queuedForTranscription": "В очереди на транскрипцию",
+    "importFailed": "Ошибка импорта",
+    "invalidUrl": "Пожалуйста, введите корректный URL (YouTube, Twitter, TikTok и т.д.)"
   },
   "uploadProgress": {
     "title": "Прогресс загрузки"
