@@ -19,6 +19,39 @@
             </div>
             <input ref="fileInput" type="file" @change="handleFileSelect" accept="audio/*,video/*,.mp3,.m4a,.wav,.aac,.ogg,.flac,.wma,.aiff,.opus,.caf,.3gp,.3gpp,.amr,.mp4,.mov,.webm,.mkv,.avi,.m4v,.ts,.mts,.wmv,.flv,.mpeg,.mpg,.ogv,.vob,.asf" multiple class="hidden">
 
+            <!-- URL Import Section -->
+            <div class="my-4 flex items-center">
+                <div class="flex-grow border-t border-[var(--border-secondary)]"></div>
+                <span class="flex-shrink mx-3 text-[10px] text-[var(--text-muted)] uppercase" v-text="t('common.or')"></span>
+                <div class="flex-grow border-t border-[var(--border-secondary)]"></div>
+            </div>
+
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <input v-model="importUrl"
+                           type="url"
+                           :placeholder="t('upload.importUrlPlaceholder')"
+                           :disabled="importingUrl"
+                           class="w-full pl-8 pr-3 py-2 text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-secondary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)] disabled:opacity-50"
+                           @keydown.enter="startUrlImport">
+                    <i class="fas fa-link absolute left-2.5 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)]"></i>
+                </div>
+                <button @click="startUrlImport"
+                        :disabled="!isValidImportUrl || importingUrl"
+                        class="px-4 py-2 bg-[var(--bg-button)] text-[var(--text-button)] rounded-lg hover:bg-[var(--bg-button-hover)] transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    <i :class="importingUrl ? 'fas fa-spinner fa-spin' : 'fas fa-download'"></i>
+                    <span v-text="importingUrl ? t('upload.downloading') : t('upload.importButton')"></span>
+                </button>
+            </div>
+            <p v-if="importError" class="text-xs text-red-500 mt-1">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                ${ importError }
+            </p>
+            <p v-if="!importError && importUrl.trim() && !isValidImportUrl" class="text-xs text-amber-500 mt-1">
+                <i class="fas fa-info-circle mr-1"></i>
+                ${ t('upload.invalidUrl') }
+            </p>
+
             <!-- Queued Files Display -->
             <div v-if="pendingQueueFiles.length > 0" class="mt-3">
                 <div class="flex items-center justify-between mb-1.5">
