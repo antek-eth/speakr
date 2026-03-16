@@ -49,11 +49,13 @@ class ConnectorRegistry:
         from .connectors.openai_transcribe import OpenAITranscribeConnector
         from .connectors.asr_endpoint import ASREndpointConnector
         from .connectors.azure_openai_transcribe import AzureOpenAITranscribeConnector
+        from .connectors.assemblyai import AssemblyAIConnector
 
         self.register('openai_whisper', OpenAIWhisperConnector)
         self.register('openai_transcribe', OpenAITranscribeConnector)
         self.register('asr_endpoint', ASREndpointConnector)
         self.register('azure_openai_transcribe', AzureOpenAITranscribeConnector)
+        self.register('assemblyai', AssemblyAIConnector)
 
     def register(self, name: str, connector_class: Type[BaseTranscriptionConnector]):
         """

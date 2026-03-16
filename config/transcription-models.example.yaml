@@ -51,11 +51,24 @@ models:
       diarization: false
       max_file_size_mb: 25
 
+  # AssemblyAI Universal-3 Pro (best accuracy, 99+ languages, diarization)
+  - id: assemblyai
+    name: "AssemblyAI Universal-3 Pro"
+    connector: assemblyai
+    config:
+      api_key: ${ASSEMBLYAI_API_KEY}
+      speech_models:
+        - universal-3-pro
+        - universal-2
+    capabilities:
+      diarization: true
+
 # Available connectors:
 #   openai_whisper          - OpenAI Whisper API
 #   openai_transcribe       - OpenAI GPT-4o Transcribe
 #   azure_openai_transcribe - Azure OpenAI (requires endpoint + deployment_name)
 #   asr_endpoint            - Self-hosted ASR (WhisperX, whisper-asr-webservice)
+#   assemblyai              - AssemblyAI (universal-3-pro, universal-2, nano)
 #
 # Deployment:
 #   1. Copy this file to config/transcription-models.yaml
