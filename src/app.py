@@ -562,6 +562,7 @@ from src.api.events import events_bp, init_events_helpers
 from src.api.system import system_bp, init_system_helpers
 from src.api.push_notifications import push_bp
 from src.api.api_v1 import api_v1_bp, init_api_v1_helpers
+from src.api.models import models_bp
 
 # Database initialization (extracted to src/init_db.py)
 from src.init_db import initialize_database
@@ -606,6 +607,7 @@ app.register_blueprint(events_bp)
 app.register_blueprint(system_bp)
 app.register_blueprint(push_bp)
 app.register_blueprint(api_v1_bp)
+app.register_blueprint(models_bp)
 csrf.exempt(api_v1_bp)  # API v1 uses token auth, not CSRF
 
 # File monitor and scheduler initialization functions below
