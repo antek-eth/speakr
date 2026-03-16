@@ -2253,6 +2253,194 @@ def upload_file():
         return jsonify({'error': 'An unexpected error occurred during upload.'}), 500
 
 
+@recordings_bp.route('/api/recordings/import-url', methods=['POST'])
+@login_required
+def import_url():
+    """Import audio from a URL via yt-dlp."""
+    from src.services.url_import import (
+        validate_import_url, fetch_metadata, download_audio, cleanup_partial_download
+    )
+    from src.services.transcription import get_registry
+    import time as time_mod
+    import glob as glob_mod
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Request body required'}), 400
+
+    url = data.get('url', '').strip()
+    model_id = data.get('model_id', '').strip() or None
+    tag_ids = data.get('tags', [])
+    language = data.get('language', '').strip() or None
+    hotwords = data.get('hotwords', '').strip() or None
+    initial_prompt = data.get('initial_prompt', '').strip() or None
+    min_speakers = data.get('min_speakers')
+    max_speakers = data.get('max_speakers')
+
+    # Validate URL with SSRF protection
+    valid, error = validate_import_url(url)
+    if not valid:
+        return jsonify({'error': error}), 400
+
+    # Validate model_id
+    if model_id:
+        registry = get_registry()
+        if not registry.validate_model_id(model_id):
+            return jsonify({'error': f'Unknown transcription model: {model_id}'}), 400
+
+    # Rate limiting: max 5 concurrent downloads per user
+    active_downloads = Recording.query.filter_by(
+        user_id=current_user.id, status='DOWNLOADING'
+    ).count()
+    if active_downloads >= 5:
+        return jsonify({'error': 'Too many concurrent downloads. Please wait for current downloads to finish.'}), 429
+
+    # Create recording with DOWNLOADING status
+    recording = Recording(
+        title='Downloading...',
+        status='DOWNLOADING',
+        user_id=current_user.id,
+        source_url=url,
+        transcription_model_id=model_id,
+        processing_source='url_import',
+    )
+    db.session.add(recording)
+    db.session.commit()
+    recording_id = recording.id
+
+    try:
+        # Fetch metadata (title, duration) — fast, no download
+        meta = fetch_metadata(url)
+        title = meta['title'] if meta else None
+        duration = meta.get('duration') if meta else None
+
+        # Pre-check: reject very long videos (>4 hours)
+        if duration and duration > 14400:
+            recording.status = 'FAILED'
+            recording.error_message = 'Video is too long (max 4 hours)'
+            db.session.commit()
+            return jsonify({'error': recording.error_message, 'recording_id': recording_id}), 422
+
+        # Download audio
+        upload_folder = current_app.config.get('UPLOAD_FOLDER', '/data/uploads')
+        ts = int(time_mod.time())
+        output_template = os.path.join(upload_folder, f"{ts}_{recording_id}.%(ext)s")
+        cleanup_pattern = os.path.join(upload_folder, f"{ts}_{recording_id}.*")
+
+        success, dl_error = download_audio(url, output_template)
+
+        if not success:
+            recording.status = 'FAILED'
+            recording.error_message = dl_error
+            db.session.commit()
+            cleanup_partial_download(cleanup_pattern)
+            return jsonify({'error': dl_error, 'recording_id': recording_id}), 422
+
+        # Find the downloaded file
+        files = glob_mod.glob(os.path.join(upload_folder, f"{ts}_{recording_id}.*"))
+        if not files:
+            recording.status = 'FAILED'
+            recording.error_message = 'Downloaded file not found'
+            db.session.commit()
+            return jsonify({'error': 'Downloaded file not found'}), 500
+
+        filepath = files[0]
+        file_size = os.path.getsize(filepath)
+
+        # Run through existing upload normalization: codec detection, conversion
+        try:
+            from src.utils.ffprobe import get_codec_info
+            from src.utils.audio_conversion import convert_if_needed
+            from src.services.transcription import get_registry as _get_reg
+
+            probe_timeout = max(10, file_size // (1024 * 1024))  # scale by MB
+            codec_info = get_codec_info(filepath, timeout=probe_timeout)
+
+            reg = _get_reg()
+            connector = reg.get_connector(model_id)
+            connector_specs = connector.specifications if hasattr(connector, 'specifications') else None
+
+            result = convert_if_needed(
+                filepath,
+                original_filename=os.path.basename(filepath),
+                codec_info=codec_info,
+                connector_specs=connector_specs,
+            )
+            # ConversionResult has .output_path and .final_size
+            if result.output_path != filepath:
+                filepath = result.output_path
+                file_size = result.final_size
+        except Exception as e:
+            current_app.logger.warning(f"Post-download normalization failed: {e}")
+            # Continue with original file — don't fail the import
+
+        # Process tags (matches upload endpoint authorization: user owns tag OR is member of tag's group)
+        selected_tags = []
+        if tag_ids:
+            from src.models import Tag
+            from src.models.organization import GroupMembership
+            for tid in tag_ids:
+                tag = db.session.get(Tag, tid)
+                if tag:
+                    if tag.user_id == current_user.id:
+                        selected_tags.append(tag)
+                    elif tag.group_id and GroupMembership.query.filter_by(
+                        group_id=tag.group_id, user_id=current_user.id
+                    ).first():
+                        selected_tags.append(tag)
+
+        # Update recording
+        recording.audio_path = filepath
+        recording.original_filename = os.path.basename(filepath)
+        recording.title = title or f"Import - {url[:80]}"
+        recording.file_size = file_size
+        recording.status = 'PENDING'
+        recording.meeting_date = datetime.utcnow()
+        db.session.commit()
+
+        # Add tags
+        for order, tag in enumerate(selected_tags, 1):
+            new_association = RecordingTag(
+                recording_id=recording.id,
+                tag_id=tag.id,
+                order=order,
+                added_at=datetime.utcnow()
+            )
+            db.session.add(new_association)
+        if selected_tags:
+            db.session.commit()
+
+        # Queue transcription job
+        first_tag = selected_tags[0] if selected_tags else None
+        job_params = {
+            'language': language,
+            'min_speakers': int(min_speakers) if min_speakers else None,
+            'max_speakers': int(max_speakers) if max_speakers else None,
+            'tag_id': first_tag.id if first_tag else None,
+            'hotwords': hotwords,
+            'initial_prompt': initial_prompt,
+            'model_id': model_id,
+        }
+
+        job_queue.enqueue(
+            user_id=current_user.id,
+            recording_id=recording.id,
+            job_type='transcribe',
+            params=job_params,
+            is_new_upload=True
+        )
+
+        return jsonify(recording.to_dict(viewer_user=current_user)), 202
+
+    except Exception as e:
+        current_app.logger.error(f"URL import failed: {e}", exc_info=True)
+        recording.status = 'FAILED'
+        recording.error_message = 'Import failed unexpectedly'
+        db.session.commit()
+        cleanup_partial_download(cleanup_pattern if 'cleanup_pattern' in dir() else '')
+        return jsonify({'error': 'Import failed', 'recording_id': recording_id}), 500
+
+
 @recordings_bp.route('/api/recordings/incognito', methods=['POST'])
 @login_required
 def upload_incognito():
